@@ -16,6 +16,7 @@ interface UplaodInformation {
   status?: boolean
   progress?: number
   isTransfer?: number
+  auditStatus?: string
 }
 
 type UploadingType = Partial<UplaodInformation>

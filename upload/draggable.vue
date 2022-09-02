@@ -11,13 +11,15 @@
             :preview-src-list="previewList"
             alt="loading"
           >
-            <div slot="placeholder" class="image-slot" v-loading></div>
+            <div slot="placeholder" class="image-slot">
+              <i class="el-icon-loading"></i>
+            </div>
           </el-image>
           <el-checkbox
             class="check-box"
             v-if="picture.type === 'NEW'"
             :value="picture.checked"
-            @change="handleSelectPicture(picture)"
+            @change="(checked) => handleSelectPicture(picture, checked)"
           ></el-checkbox>
           <div class="video-warp" v-if="picture.videoImageUrl">
             <i class="iconfont iconzanting" @click="openVideo(picture)"></i>
@@ -111,13 +113,11 @@ export default class extends Vue {
   // 获取有操作权限的图片
   get hasOptionPictureList() {
     return this.pictureList.filter(
-      (item: UplaodInformation) => !this.getNoOperateStatus(item),
+      (item: Record<string, any>) =>
+        !['PASS', 'AUDITING'].includes(item.auditStatus) ||
+        !item.isTransfer ||
+        item.type === 'NEW',
     )
-  }
-
-  //获取不能操作的状态
-  getNoOperateStatus(image: Record<string, any>) {
-    return ['PASS', 'AUDITING'].includes(image.auditStatus)
   }
 
   //播放视频
@@ -129,20 +129,18 @@ export default class extends Vue {
   }
 
   // 勾选单张图片
-  async handleSelectPicture(item: UplaodInformation) {
-    const index = this.checkedPictureIds.findIndex(
-      (uid: string) => uid === item.uid,
-    )
-    if (item.checked) {
-      item.checked = false
-      this.syncCheckedPictureIds.splice(index, 1)
-      this.syncSelectAll = false
-    } else {
-      // 改变元数据
-      item.checked = true
+  async handleSelectPicture(item: UplaodInformation, checked: boolean) {
+    item.checked = checked
+    if (checked) {
       this.syncCheckedPictureIds.push(item.uid)
       this.checkedPictureIds.length === this.hasOptionPictureList.length &&
         (this.syncSelectAll = true)
+    } else {
+      const index = this.checkedPictureIds.findIndex(
+        (uid: string) => uid === item.uid,
+      )
+      index > -1 && this.syncCheckedPictureIds.splice(index, 1)
+      this.syncSelectAll = false
     }
   }
 
@@ -162,7 +160,7 @@ export default class extends Vue {
         this.syncSelectAll = false
       }
     }
-    this.$emit('update')
+    this.$emit('update', this.hasOptionPictureList)
   }
 }
 </script>
@@ -243,6 +241,17 @@ export default class extends Vue {
         }
       }
     }
+  }
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  .el-icon-loading {
+    font-size: 22px;
+    align-self: center;
   }
 }
 </style>

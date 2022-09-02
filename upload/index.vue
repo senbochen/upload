@@ -77,7 +77,7 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Prop, Watch } from 'vue-property-decorator'
+import { Component, Prop, Watch, Model } from 'vue-property-decorator'
 import { mixins } from 'vue-class-component'
 import { headers } from '@/utils/tools/index'
 import UploadMixin from '@/utils/mixins/upload-mixin'
@@ -135,9 +135,11 @@ export default class extends mixins(UploadMixin) {
 
   @Prop({ required: false, default: 'add' }) operateType!: string
 
+  @Model('update', { type: Array }) readonly list!: Array<UplaodInformation>
+
   @Watch('pictureList')
   handleChangePictureList() {
-    this.$emit('update')
+    this.$emit('update', this.hasOptionPictureList)
   }
 
   @Watch('echoList', { immediate: true })
@@ -154,13 +156,11 @@ export default class extends mixins(UploadMixin) {
   // 获取有操作权限的图片
   get hasOptionPictureList() {
     return this.pictureList.filter(
-      (item: UplaodInformation) => !this.getNoOperateStatus(item),
+      (item: Record<string, any>) =>
+        !['PASS', 'AUDITING'].includes(item.auditStatus) ||
+        !item.isTransfer ||
+        item.type === 'NEW',
     )
-  }
-
-  //获取不能操作的状态
-  getNoOperateStatus(image: Record<string, any>) {
-    return ['PASS', 'AUDITING'].includes(image.auditStatus)
   }
 
   //通过创建临时文件流来获取图片的宽度和高度及宽高比例 及 检查图片上传文件的大小
@@ -177,6 +177,7 @@ export default class extends mixins(UploadMixin) {
         //获取图片宽高比例
         const reader = new FileReader()
         reader.readAsDataURL(file)
+
         reader.onload = () => {
           const img = new Image()
           img.src = reader.result as string
@@ -290,39 +291,32 @@ export default class extends mixins(UploadMixin) {
   }
 
   // 上传成功
-  handleUploadSuccess(res: Record<string, any>, file: FileType) {
-    let index = -1
+  handleUploadSuccess(result: Record<string, any>, file: FileType) {
     const { type } = file.raw
     const isImage = EFFECTIVE_IMAGE_TYPE.includes(type)
-    if (res.status === 'C0000') {
-      // 查找待上传数组中文件
-      for (let i = 0; i < this.uploadList.length; i++) {
-        if (this.uploadList[i].uid === file.uid) {
-          index = i
-          const pictureChildren: UplaodInformation = {
-            url: isImage ? res.result : res.result.url,
-            seq: 1, //序号
-            checked: false, //是否勾选
-            tag: isImage ? 0 : 1, //0 代表图片，1代表视频
-            typeId: this.sourceData.typeId,
-            labelId: '', //图片或者视频 属于哪个类型
-            type: 'NEW', //专门用来标记是新图片
-            uid: file.uid, // 图片临时id
-            matching: this.sourceData.matching ? true : false, //是否为周边配套
-            supportId: this.sourceData?.supportId || '', //周边配套ID
-            videoImageUrl: !isImage ? res.result.videoImageUrl : '',
-            title: this.sourceData?.name || '', //配套或楼盘标题
-          }
-          this.selectAll = false
-          this.pictureList.unshift(pictureChildren) // 将图片添加到已上传完成数组
-          break
+    // 查找待上传数组中文件
+    for (let i = 0; i < this.uploadList.length; i++) {
+      if (this.uploadList[i].uid === file.uid) {
+        const pictureChildren: UplaodInformation = {
+          url: isImage ? result : result.url,
+          seq: 1, //序号
+          checked: false, //是否勾选
+          tag: isImage ? 0 : 1, //0 代表图片，1代表视频
+          typeId: this.sourceData.typeId,
+          labelId: '', //图片或者视频 属于哪个类型
+          type: 'NEW', //专门用来标记是新图片
+          uid: file.uid, // 图片临时id
+          matching: this.sourceData.matching ? true : false, //是否为周边配套
+          supportId: this.sourceData?.supportId || '', //周边配套ID
+          videoImageUrl: !isImage ? result.videoImageUrl : '',
+          title: this.sourceData?.name || '', //配套或楼盘标题
         }
+        this.selectAll = false
+        this.pictureList.unshift(pictureChildren) // 将图片添加到已上传完成数组
+        this.uploadList.splice(i, 1)
+        break
       }
-    } else {
-      index = this.uploadList.findIndex((item) => item.uid === file.uid)
-      this.$message.warning(`${file.name}图片上传失败`)
     }
-    index > -1 && this.uploadList.splice(index, 1)
   }
 
   // 上传失败
@@ -344,21 +338,13 @@ export default class extends mixins(UploadMixin) {
   }
 
   // 全选
-  handleSelectPictureAll(res: boolean) {
-    // 判断是否全选
-    if (res) {
-      const arr = []
-      for (let i = 0; i < this.hasOptionPictureList.length; i++) {
-        this.hasOptionPictureList[i].checked = true
-        arr.push(this.hasOptionPictureList[i].uid)
-      }
-      this.checkedPictureIds = arr
-    } else {
-      for (let i = 0; i < this.hasOptionPictureList.length; i++) {
-        this.hasOptionPictureList[i].checked = false
-      }
-      this.checkedPictureIds = []
+  handleSelectPictureAll(checked: boolean) {
+    const arr = []
+    for (let i = 0; i < this.hasOptionPictureList.length; i++) {
+      this.hasOptionPictureList[i].checked = checked
+      checked && arr.push(this.hasOptionPictureList[i].uid)
     }
+    this.checkedPictureIds = arr
   }
 
   // 删除图片
