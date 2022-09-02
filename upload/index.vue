@@ -177,12 +177,9 @@ export default class extends mixins(UploadMixin) {
         //获取图片宽高比例
         const reader = new FileReader()
         reader.readAsDataURL(file)
-
         reader.onload = () => {
           const img = new Image()
-          img.src = reader.result as string
-          //如果图片由于缓存已加载完毕，complete 就是true
-          if (img.complete) {
+          img.onload = () => {
             const width = img.width
             const height = img.height
             if (width !== 1920 || height !== 1440) {
@@ -198,25 +195,8 @@ export default class extends mixins(UploadMixin) {
               this.uploadList.unshift(item)
               resolve(true)
             }
-          } else {
-            img.onload = () => {
-              const width = img.width
-              const height = img.height
-              if (width !== 1920 || height !== 1440) {
-                this.$message.error(
-                  `图片尺寸需为1920*1440,当前图片尺寸为${width}*${height}`,
-                )
-                reject(false)
-              } else {
-                const item = {
-                  progress: 0,
-                  uid: file.uid,
-                }
-                this.uploadList.unshift(item)
-                resolve(true)
-              }
-            }
           }
+          img.src = reader.result as string
         }
       }
     })
