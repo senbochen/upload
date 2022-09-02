@@ -13,7 +13,6 @@ interface UplaodInformation {
   videoImageUrl: string
   title: string //配套或楼盘标题
   name?: string
-  status?: boolean
   progress?: number
   isTransfer?: number
   auditStatus?: string

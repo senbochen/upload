@@ -193,7 +193,6 @@ export default class extends mixins(UploadMixin) {
             } else {
               const item = {
                 progress: 0,
-                status: false,
                 uid: file.uid,
               }
               this.uploadList.unshift(item)
@@ -211,7 +210,6 @@ export default class extends mixins(UploadMixin) {
               } else {
                 const item = {
                   progress: 0,
-                  status: false,
                   uid: file.uid,
                 }
                 this.uploadList.unshift(item)
@@ -248,7 +246,6 @@ export default class extends mixins(UploadMixin) {
           } else {
             const item = {
               progress: 0,
-              status: false,
               uid: file.uid,
             }
             this.uploadList.unshift(item)
@@ -321,11 +318,9 @@ export default class extends mixins(UploadMixin) {
 
   // 上传失败
   onError(err: Error, file: FileType) {
-    let index = -1
     for (let i = 0; i < this.uploadList.length; i++) {
       if (this.uploadList[i].uid === file.uid) {
-        this.uploadList[i].status = true
-        index = i
+        this.uploadList.splice(i, 1)
         // 删除指定文件
         this.$message({
           message: '上传失败',
@@ -334,7 +329,6 @@ export default class extends mixins(UploadMixin) {
         break
       }
     }
-    index > -1 && this.uploadList.splice(index, 1)
   }
 
   // 全选
@@ -368,9 +362,7 @@ export default class extends mixins(UploadMixin) {
           const index = this.pictureList.findIndex(
             (list: UplaodInformation) => list.uid === uid,
           )
-          if (index > -1) {
-            this.pictureList.splice(index, 1)
-          }
+          this.pictureList.splice(index, 1)
         }
         this.checkedPictureIds = [] //清空所有选择的数据
         this.selectAll = false // 全选判断为false

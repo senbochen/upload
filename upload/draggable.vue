@@ -10,6 +10,7 @@
             :z-index="9999"
             :preview-src-list="previewList"
             alt="loading"
+            fit="cover"
           >
             <div slot="placeholder" class="image-slot">
               <i class="el-icon-loading"></i>
@@ -33,7 +34,7 @@
             clearable
             v-model="picture.labelId"
             @change="(event) => handleChangeType(event)"
-            :disabled="getNoOperateStatus(picture)"
+            :disabled="!getNoOperateStatus(picture)"
           >
             <el-option
               v-for="item in imageTypeList"
@@ -112,11 +113,16 @@ export default class extends Vue {
 
   // 获取有操作权限的图片
   get hasOptionPictureList() {
-    return this.pictureList.filter(
-      (item: Record<string, any>) =>
-        !['PASS', 'AUDITING'].includes(item.auditStatus) ||
-        !item.isTransfer ||
-        item.type === 'NEW',
+    return this.pictureList.filter((item: Record<string, any>) =>
+      this.getNoOperateStatus(item),
+    )
+  }
+
+  getNoOperateStatus(item: Record<string, any>) {
+    return (
+      !['PASS', 'AUDITING'].includes(item.auditStatus) ||
+      !item.isTransfer ||
+      item.type === 'NEW'
     )
   }
 

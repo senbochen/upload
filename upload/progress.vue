@@ -1,8 +1,7 @@
 <template>
-  <div class="picture-item-upload-progress">
-    <div v-for="item in uploadList" :key="item.uid">
+  <div class="progress-wrap">
+    <div v-for="item in uploadList" :key="item.uid" class="progress-color">
       <el-progress
-        v-if="!item.status"
         type="circle"
         class="upload-progress"
         :percentage="item.progress"
@@ -33,7 +32,10 @@ export default class extends Vue {
 }
 </script>
 <style scoped lang="scss">
-.picture-item-upload-progress {
+.progress-wrap {
+  display: flex;
+}
+.progress-color {
   width: 130px;
   height: 130px;
   margin: 0 6px 10px 0;
