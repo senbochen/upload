@@ -1,4 +1,4 @@
-#### Upload组件
+## Upload组件
 
 
 
@@ -37,7 +37,7 @@
 
 > demo
 
-`
+```
  <upload
   v-for="item in multipleList['TRAFFIC_FACILITIES'].data"
   :key="item.uid"
@@ -47,4 +47,4 @@
   :operateType="showAddOperation ? 'add' : 'edit'"
   @remove="removeCallback"
 ></upload>
-`
+```
