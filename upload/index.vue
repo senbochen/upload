@@ -59,10 +59,7 @@
           </el-upload>
 
           <!-- 上传中列表  -->
-          <k-progress
-            :uploadList="uploadList"
-            v-if="uploadList.length"
-          ></k-progress>
+          <k-progress :uploadList="uploadList"></k-progress>
         </div>
 
         <!-- 上传成功图片列表 状态为待补拍和审核通过都现实为审核通过 -->
